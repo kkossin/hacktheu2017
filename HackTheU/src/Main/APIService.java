@@ -1,14 +1,41 @@
 package Main;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
+import net.sf.json.JSONArray;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.Headers;
@@ -18,12 +45,12 @@ import com.sun.net.httpserver.HttpHandler;
 public class APIService implements HttpHandler {
 	@Override
 	public void handle(HttpExchange t) {
-		Runnable r = new GenomeAuthenticationThread(t);
+		Runnable r = new APIThread(t);
 		new Thread(r).start();
 	}
 }
 
-class GenomeAuthenticationThread implements Runnable {
+class APIThread implements Runnable {
 	//TODO: PLACE BASE URI HERE
 	private final String _baseURI = "/facePay";
 	private HttpExchange t;
@@ -33,11 +60,12 @@ class GenomeAuthenticationThread implements Runnable {
 	private StringBuilder responseBuffer;
 	private int httpResponseCode;
 	
-	public GenomeAuthenticationThread(HttpExchange parameter) {
+	public APIThread(HttpExchange parameter) {
 		t = parameter;
 	}
 
 	public void run() {
+		System.out.println("Client");
 		InputStream is; // used for reading in the request data
 		OutputStream os; // used for writing out the response data
 		requestString = "";
@@ -61,7 +89,7 @@ class GenomeAuthenticationThread implements Runnable {
 		// GET Requests won't have any data in the body
 		if(requestMethod.equalsIgnoreCase("GET")){
 			getParams = ServerUtils.parseQuery(requestQuery);
-			System.out.println(new Date().toString() + ": " + requestQuery);
+			System.out.println(new Date().toString() + ": ");
 		} 		
 		else if (requestMethod.equalsIgnoreCase("POST")) {
 			try {
@@ -93,13 +121,24 @@ class GenomeAuthenticationThread implements Runnable {
 		 * in JSON format httpResponseCode is an int that holds what response
 		 * code you want to return
 		 */
-		System.out.println(new Date().toString() + ": " + requestString);
+		System.out.println(new Date().toString() + ": ");
 		try {
 			//TODO: DETERMINE IF POST OR GET... THEN CALL METHOD BASED ON PATH.
 			if (requestMethod.equalsIgnoreCase("POST")) {
 				if (uri.equals(_baseURI+"/login") || uri.equals(_baseURI+"/login/")) {
 					loginUser();
+				}else if (uri.equals(_baseURI+"/newUser") || uri.equals(_baseURI+"/newUser/")) {
+					registerUser();
 				}
+				else if (uri.equals(_baseURI+"/enroll") || uri.equals(_baseURI+"/enroll/")) {
+					//send image to Kairos
+					enroll();
+				}
+				else if (uri.equals(_baseURI+"/recognize") || uri.equals(_baseURI+"/recognize/")) {
+					//try to recognize person in photo using Kairos images
+					recognize();
+				}
+				
 			} else if (requestMethod.equalsIgnoreCase("GET")){
 				if (uri.equals(_baseURI+"/getUserInfo") || uri.equals(_baseURI+"/getUserInfo/")) {
 					getUserInfo(getParams);
@@ -139,22 +178,224 @@ class GenomeAuthenticationThread implements Runnable {
 		//This gets params from post request
 		JsonParser parser = new JsonParser();
 		jsonRequest = parser.parse(requestString).getAsJsonObject();
-		String email = jsonRequest.get("UserEmail").getAsString();
+		String username = jsonRequest.get("Username").getAsString();
 		String pword = jsonRequest.get("UserPassword").getAsString();
-
+		
+		boolean valid=false;
 		//CHECKS IF VALID AND PUT TOKEN AS A JSON OBJECT INTO RESPONSE BUFFER AND UPDATES RESPONSE CODE.
-		if (email != null && pword != null) {
-			JsonObject jsonResponse = new JsonObject();
-			String token = generateTokenString();
-			jsonResponse.addProperty("UserToken", token);
-			responseBuffer.append(jsonResponse.toString());
-			httpResponseCode = 200;
-		}  else {
+		if (username != null && pword != null) {
+			if(Database.loginUser(username, pword))
+			{
+				JsonObject jsonResponse = new JsonObject();
+				String token = username;
+				jsonResponse.addProperty("UserToken", token);
+				responseBuffer.append(jsonResponse.toString());
+				httpResponseCode = 200;
+				valid=true;
+			}
+			
+		}  
+			
+		if(!valid)
+		{
 			responseBuffer.append("Invalid UserEmail or UserPassword");
 			httpResponseCode = 400;
 		}
 	}
 	
+	public void registerUser()
+	{
+		JsonParser parser = new JsonParser();
+		jsonRequest = parser.parse(requestString).getAsJsonObject();
+		String email = jsonRequest.get("Username").getAsString();
+		String pword = jsonRequest.get("UserPassword").getAsString();
+
+		String prn = createAccountG(email, pword);
+		user newUser = new user(email,prn,pword);		
+
+		newUserResponse response = Database.addUser(newUser);
+		if(response.success)
+		{
+			String token = email;
+			JsonObject jsonResponse = new JsonObject();			
+			jsonResponse.addProperty("UserToken", token);
+			responseBuffer.append(jsonResponse.toString());
+			httpResponseCode = 200;
+			enroll();
+		}else
+		{
+			responseBuffer.append(response.status.toString());
+			httpResponseCode = 400;
+		}	
+	}
+	
+	private String createAccountG(String email, String pword) {
+		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+		System.setProperty("javax.net.ssl.keyStore", "res/keystore.p12");
+		System.setProperty("javax.net.ssl.keyStorePassword", "letmein");
+		SSLSocketFactory sslFact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		 String prn ="";
+		
+		try{
+			Map<String, Object> params = new LinkedHashMap<>();
+			params.put("apiLogin", "bJ5GQn-9999");
+			params.put("apiTransKey", "lL3CNUjWdn");
+			params.put("providerId", "511");
+			params.put("transactionId", generateTokenString());
+			params.put("prodId", "5094");
+			StringBuilder postData = new StringBuilder();
+			for (Map.Entry<String,Object> param : params.entrySet()) {
+				if (postData.length() != 0) postData.append('&');
+				postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+				postData.append('=');
+				postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+			}
+			byte[] postDataBytes = postData.toString().getBytes("UTF-8");
+			URL url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/createAccount");
+			HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+			conn.setSSLSocketFactory(sslFact);
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+			conn.setDoOutput(true);
+			conn.getOutputStream().write(postDataBytes);
+
+			String xmlOutput;
+			StringBuilder sb = new StringBuilder();
+			
+			String pattern = "<pmt_ref_no>(\\d*)<\\/pmt_ref_no>";
+			 Pattern r = Pattern.compile(pattern);
+			
+			Reader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+			for (int c; (c = in.read()) >= 0;) {
+				sb.append((char)c);				
+			}
+			xmlOutput=sb.toString();
+			Matcher m = r.matcher(xmlOutput);
+			if(m.find())
+			{
+				prn=m.group(1);
+			}
+			
+		}catch(MalformedURLException e)
+		{
+			e.printStackTrace();
+			return null;
+		}catch(IOException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+		return prn;
+	}
+	
+	class enrollInfo {
+		String image;
+		String subject_id;
+		String gallery_name;
+	}
+	
+	class recognizeInfo {
+		String image;
+		String gallery_name;
+	}
+	
+	public void enroll() {
+		Gson gson = new Gson();
+		HttpClient client = HttpClientBuilder.create().build();
+		HttpPost request = new HttpPost("https://api.kairos.com" + "/enroll");
+		request.setHeader("Content-Type", "application.json");
+		request.setHeader("app_id", "7d561877");
+		request.setHeader("app_key", "f194b9c6004f4f009d3da627836078d9");
+		
+		JsonParser parser = new JsonParser();
+		jsonRequest = parser.parse(requestString).getAsJsonObject();
+		String email = jsonRequest.get("Username").getAsString();
+		
+
+		//JsonArray arr = jsonRequest.getAsJsonArray("Images");
+//		List<String> list = new ArrayList<String>();
+//		for(int i = 0; i < arr.size(); i++){
+//		    list.add(arr.get(i).getAsString());
+//		}		
+//		System.out.println("List Size"+list.size());
+//		//for(int i=0;i<list.size();i++)
+		//{
+			enrollInfo info = new enrollInfo();
+			info.subject_id = Database.users.get(email).prn;
+			info.image = jsonRequest.get("Images").getAsString();
+			
+			info.image=info.image.replace(' ','+');
+			//System.out.println(info.image);
+			
+			info.gallery_name = "buschemi";
+			try {
+				StringEntity postingString = new StringEntity(gson.toJson(info));
+				request.setEntity(postingString);
+				HttpResponse response = client.execute(request);
+				
+				if(response.getStatusLine().getStatusCode() == 200) {
+					System.out.println("Enroll Success!");
+					httpResponseCode = 200;
+//					JsonParser kparser = new JsonParser();
+//	                JsonObject json = kparser.parse(EntityUtils.toString(response.getEntity())).getAsJsonObject();
+//	                System.out.println("Printing Json");
+//	                System.out.println(json);
+				}
+				else
+				{
+					System.out.println("enroll Fail");
+					httpResponseCode = 400;
+				}	
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			//}
+		}	
+		
+	}
+	
+	public void recognize() {
+		Gson gson = new Gson();
+		HttpClient client = HttpClientBuilder.create().build();
+		HttpPost request = new HttpPost("https://api.kairos.com" + "/recognize");
+		request.setHeader("Content-Type", "application.json");
+		request.setHeader("app_id", "7d561877");
+		request.setHeader("app_key", "f194b9c6004f4f009d3da627836078d9");
+		
+		JsonParser parser = new JsonParser();
+		jsonRequest = parser.parse(requestString).getAsJsonObject();
+		String email = jsonRequest.get("Username").getAsString();
+		
+		
+		
+		recognizeInfo info = new recognizeInfo();		
+		info.image = jsonRequest.get("Images").getAsString();		
+		info.image=info.image.replace(' ','+');
+		
+		info.gallery_name = "buschemi";
+		try {
+			StringEntity postingString = new StringEntity(gson.toJson(info));
+			request.setEntity(postingString);
+			HttpResponse response = client.execute(request);
+			
+			if(response.getStatusLine().getStatusCode() == 200) {
+				System.out.println("Success!");
+				httpResponseCode = 200;
+				JsonParser kparser = new JsonParser();
+                //JsonObject json = kparser.parse(EntityUtils.toString(response.getEntity())).getAsJsonObject();
+              //  System.out.println(json);
+			}
+			else
+			{
+				
+				httpResponseCode = 400;
+			}	
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void getUserInfo(Map<String, String> params){
 		//TODO: GET PARAMS
 		String userToken = params.get("UserToken");
@@ -173,13 +414,13 @@ class GenomeAuthenticationThread implements Runnable {
 		}
 		
 	}
-	
+		
 	
 	//THIS JUST GENERATES A RANDOM TOKEN... WE DONT NEED TO USE IT.
 	public String generateTokenString() {
 		Random rng = new Random();
-		int length = 45;
-		String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-~";
+		int length = 49;
+		String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 	    String text = "";
 	    for (int i = 0; i < length; i++)
 	    {
