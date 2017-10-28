@@ -146,6 +146,10 @@ class APIThread implements Runnable {
 					//try to recognize person in photo using Kairos images
 					addFunds();
 				}
+				else if (uri.equals(_baseURI+"/getBalance") || uri.equals(_baseURI+"/getBalance/")) {
+					//try to recognize person in photo using Kairos images
+					getBalance();
+				}
 				
 			} else if (requestMethod.equalsIgnoreCase("GET")){
 				if (uri.equals(_baseURI+"/getUserInfo") || uri.equals(_baseURI+"/getUserInfo/")) {
@@ -179,6 +183,20 @@ class APIThread implements Runnable {
 		}
 	}
 	
+	private void getBalance() {
+		JsonParser parser = new JsonParser();
+		jsonRequest = parser.parse(requestString).getAsJsonObject();
+		String username = jsonRequest.get("Username").getAsString();
+		String amount = jsonRequest.get("Amount").getAsString();
+		
+		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+		System.setProperty("javax.net.ssl.keyStore", "res/keystore.p12");
+		System.setProperty("javax.net.ssl.keyStorePassword", "letmein");
+		SSLSocketFactory sslFact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		String prn = "";
+		
+	}
+
 	private void addFunds() {
 		JsonParser parser = new JsonParser();
 		jsonRequest = parser.parse(requestString).getAsJsonObject();
@@ -196,13 +214,12 @@ class APIThread implements Runnable {
 		params.put("apiLogin", "bJ5GQn-9999");
 		params.put("apiTransKey", "lL3CNUjWdn");
 		params.put("providerId", "511");
-		params.put("transactionId", generateTokenString());
+		Random rand = new Random();
+		params.put("transactionId", rand.nextInt(999999999));
 		params.put("accountNo", Database.users.get(username).prn);
 		params.put("amount", amount);
 		params.put("type", "F");
-		params.put("debitCreditIndicator", "D");
-		params.put("location", "a455-3483");
-		params.put("locationType", "1");
+		params.put("debitCreditIndicator", "C");
 		StringBuilder postData = new StringBuilder();
 		for (Map.Entry<String,Object> param : params.entrySet()) {
 			if (postData.length() != 0) postData.append('&');
@@ -253,13 +270,13 @@ class APIThread implements Runnable {
 			params.put("apiLogin", "bJ5GQn-9999");
 			params.put("apiTransKey", "lL3CNUjWdn");
 			params.put("providerId", "511");
-			params.put("transactionId", generateTokenString());
+			Random rand = new Random();
+			
+			params.put("transactionId", rand.nextInt());
 			params.put("accountNo", Database.users.get(to).prn);
 			params.put("amount", amount);
 			params.put("type", "F");
-			params.put("debitCreditIndicator", "D");
-			params.put("location", "a455-3483");
-			params.put("locationType", "1");
+			params.put("debitCreditIndicator", "C");
 			StringBuilder postData = new StringBuilder();
 			for (Map.Entry<String,Object> param : params.entrySet()) {
 				if (postData.length() != 0) postData.append('&');
@@ -290,15 +307,14 @@ class APIThread implements Runnable {
 			params2.put("apiLogin", "bJ5GQn-9999");
 			params2.put("apiTransKey", "lL3CNUjWdn");
 			params2.put("providerId", "511");
-			params2.put("transactionId", generateTokenString());
+			Random rand2 = new Random();
+			params2.put("transactionId", rand2.nextInt());
 			params2.put("accountNo", Database.users.get(from).prn);
 			params2.put("amount", amount);
 			params2.put("type", "F");
-			params2.put("debitCreditIndicator", "C");
-			params2.put("location", "a455-3483");
-			params2.put("locationType", "1");
+			params2.put("debitCreditIndicator", "D");
 			StringBuilder postData2 = new StringBuilder();
-			for (Map.Entry<String,Object> param : params.entrySet()) {
+			for (Map.Entry<String,Object> param : params2.entrySet()) {
 				if (postData2.length() != 0) postData2.append('&');
 				postData2.append(URLEncoder.encode(param.getKey(), "UTF-8"));
 				postData2.append('=');
@@ -306,17 +322,17 @@ class APIThread implements Runnable {
 			}
 			byte[] postDataBytes2 = postData2.toString().getBytes("UTF-8");
 
-			url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/createAdjustment");
+			URL url2 = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/createAdjustment");
 
-			conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("POST");
-			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-			conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes2.length));
-			conn.setDoOutput(true);
-			conn.getOutputStream().write(postDataBytes2);
+			HttpURLConnection conn2 = (HttpURLConnection) url2.openConnection();
+			conn2.setRequestMethod("POST");
+			conn2.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			conn2.setRequestProperty("Content-Length", String.valueOf(postDataBytes2.length));
+			conn2.setDoOutput(true);
+			conn2.getOutputStream().write(postDataBytes2);
 
-			in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-			for (int c; (c = in.read()) >= 0;) {
+			Reader in2 = new BufferedReader(new InputStreamReader(conn2.getInputStream(), "UTF-8"));
+			for (int c; (c = in2.read()) >= 0;) {
 				System.out.print((char)c);
 			}
 		} catch (MalformedURLException e) {
@@ -374,7 +390,6 @@ class APIThread implements Runnable {
 			jsonResponse.addProperty("UserToken", token);
 			responseBuffer.append(jsonResponse.toString());
 			httpResponseCode = 200;
-			enroll();
 		}else
 		{
 			responseBuffer.append(response.status.toString());
@@ -539,8 +554,13 @@ class APIThread implements Runnable {
                 JsonObject json = kparser.parse(EntityUtils.toString(response.getEntity())).getAsJsonObject();
                 
                 System.out.println(json.toString());
-               String toPrn = json.get("subject_id").getAsString();
-               
+                try {
+                	  String toPrn = json.getAsJsonObject("images").getAsJsonObject("transaction").get("subject_id").getAsString();
+				} catch (Exception e) {
+					System.out.println();// TODO: handle exception
+				}
+             
+               //System.out.println(toPrn);
 			}
 			else
 			{
@@ -586,8 +606,8 @@ class APIThread implements Runnable {
 	//THIS JUST GENERATES A RANDOM TOKEN... WE DONT NEED TO USE IT.
 	public String generateTokenString() {
 		Random rng = new Random();
-		int length = 49;
-		String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+		int length = 12;
+		String characters = "123456789";
 	    String text = "";
 	    for (int i = 0; i < length; i++)
 	    {
