@@ -217,7 +217,7 @@ class APIThread implements Runnable {
 			}
 			byte[] postDataBytes = postData.toString().getBytes("UTF-8");
 
-			URL url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/getBalance");
+			URL url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/getTransHistory");
 
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("POST");
@@ -228,25 +228,43 @@ class APIThread implements Runnable {
 
 			String xmlOutput;
 			StringBuilder sb = new StringBuilder();
-			String pattern = "<balance>(\\d+(.\\d)?\\d*)<\\/balance>";
-			 Pattern r = Pattern.compile(pattern);
+			
+		
+			String pattern1 = "<post_ts>(\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})<\\/post_ts>";
+			String pattern2 = "<amt>(-?(\\d+(.\\d)?\\d*))<\\/amt>";//
+			
+			 Pattern r1 = Pattern.compile(pattern1);
+			 Pattern r2 = Pattern.compile(pattern2);
 			
 			Reader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
 			for (int c; (c = in.read()) >= 0;) {
 				sb.append((char)c);		
-				System.out.print((char)c);
+				//System.out.print((char)c);
 			}
 			
 			xmlOutput=sb.toString();
-			Matcher m = r.matcher(xmlOutput);
-			if(m.find())
-			{
-				balance=m.group(1);
-			}
+			StringBuilder output = new StringBuilder();
 			
+			Matcher m1 = r1.matcher(xmlOutput);
+			Matcher m2 = r2.matcher(xmlOutput);
+			output.append("{\"Transactions\":[");
+			while(m1.find()&&m2.find())
+			{
+				output.append("{\"Date\":");
+				output.append("\""+m1.group(1)+"\"");
+			//	m1.replaceFirst("");
+				output.append(",");
+				output.append("\"Amount\":");
+				output.append(m2.group(1));
+			//	m2.replaceFirst("");
+				output.append("},");
+			}
+			output.replace(output.length() - 1, output.length(), "]}");
+			System.out.println(output.toString());
+
 			JsonObject jsonResponse = new JsonObject();
 			String token = balance;
-			jsonResponse.addProperty("UserToken", balance);
+			jsonResponse.addProperty("UserToken", output.toString());
 			responseBuffer.append(jsonResponse.toString());
 			httpResponseCode = 200;
 
@@ -373,6 +391,7 @@ class APIThread implements Runnable {
 		for (int c; (c = in.read()) >= 0;) {
 			System.out.print((char)c);
 		}
+		httpResponseCode = 200;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -464,6 +483,7 @@ class APIThread implements Runnable {
 			for (int c; (c = in2.read()) >= 0;) {
 				System.out.print((char)c);
 			}
+			httpResponseCode = 200;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
