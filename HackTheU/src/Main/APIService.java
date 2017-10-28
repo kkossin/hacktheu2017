@@ -138,6 +138,14 @@ class APIThread implements Runnable {
 					//try to recognize person in photo using Kairos images
 					recognize();
 				}
+				else if (uri.equals(_baseURI+"/pay") || uri.equals(_baseURI+"/pay/")) {
+					//try to recognize person in photo using Kairos images
+					pay();
+				}
+				else if (uri.equals(_baseURI+"/addFunds") || uri.equals(_baseURI+"/addFunds/")) {
+					//try to recognize person in photo using Kairos images
+					addFunds();
+				}
 				
 			} else if (requestMethod.equalsIgnoreCase("GET")){
 				if (uri.equals(_baseURI+"/getUserInfo") || uri.equals(_baseURI+"/getUserInfo/")) {
@@ -171,8 +179,153 @@ class APIThread implements Runnable {
 		}
 	}
 	
+	private void addFunds() {
+		JsonParser parser = new JsonParser();
+		jsonRequest = parser.parse(requestString).getAsJsonObject();
+		String username = jsonRequest.get("Username").getAsString();
+		String amount = jsonRequest.get("Amount").getAsString();
+		
+		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+		System.setProperty("javax.net.ssl.keyStore", "res/keystore.p12");
+		System.setProperty("javax.net.ssl.keyStorePassword", "letmein");
+		SSLSocketFactory sslFact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		String prn = "";
+		
+		try {
+		Map<String,Object> params = new LinkedHashMap<>();
+		params.put("apiLogin", "bJ5GQn-9999");
+		params.put("apiTransKey", "lL3CNUjWdn");
+		params.put("providerId", "511");
+		params.put("transactionId", generateTokenString());
+		params.put("accountNo", Database.users.get(username).prn);
+		params.put("amount", amount);
+		params.put("type", "F");
+		params.put("debitCreditIndicator", "D");
+		params.put("location", "a455-3483");
+		params.put("locationType", "1");
+		StringBuilder postData = new StringBuilder();
+		for (Map.Entry<String,Object> param : params.entrySet()) {
+			if (postData.length() != 0) postData.append('&');
+			postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+			postData.append('=');
+			postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+		}
+		byte[] postDataBytes = postData.toString().getBytes("UTF-8");
 
-	
+		URL url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/createAdjustment");
+
+		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		conn.setRequestMethod("POST");
+		conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+		conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+		conn.setDoOutput(true);
+		conn.getOutputStream().write(postDataBytes);
+
+		String xmlOutput;
+
+		Reader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+		for (int c; (c = in.read()) >= 0;) {
+			System.out.print((char)c);
+		}
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void pay() {
+		JsonParser parser = new JsonParser();
+		jsonRequest = parser.parse(requestString).getAsJsonObject();
+		String from = jsonRequest.get("From").getAsString();
+		String to = jsonRequest.get("To").getAsString();
+		String amount = jsonRequest.get("Amount").getAsString();
+		
+		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+		System.setProperty("javax.net.ssl.keyStore", "res/keystore.p12");
+		System.setProperty("javax.net.ssl.keyStorePassword", "letmein");
+		SSLSocketFactory sslFact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		String prn ="";
+		
+		try {
+			//debit - add money for 'to'
+			Map<String,Object> params = new LinkedHashMap<>();
+			params.put("apiLogin", "bJ5GQn-9999");
+			params.put("apiTransKey", "lL3CNUjWdn");
+			params.put("providerId", "511");
+			params.put("transactionId", generateTokenString());
+			params.put("accountNo", Database.users.get(to).prn);
+			params.put("amount", amount);
+			params.put("type", "F");
+			params.put("debitCreditIndicator", "D");
+			params.put("location", "a455-3483");
+			params.put("locationType", "1");
+			StringBuilder postData = new StringBuilder();
+			for (Map.Entry<String,Object> param : params.entrySet()) {
+				if (postData.length() != 0) postData.append('&');
+				postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+				postData.append('=');
+				postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+			}
+			byte[] postDataBytes = postData.toString().getBytes("UTF-8");
+
+			URL url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/createAdjustment");
+
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+			conn.setDoOutput(true);
+			conn.getOutputStream().write(postDataBytes);
+
+			String xmlOutput;
+
+			Reader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+			for (int c; (c = in.read()) >= 0;) {
+				System.out.print((char)c);
+			}
+			
+			//credit - take money from "from"
+			Map<String,Object> params2 = new LinkedHashMap<>();
+			params2.put("apiLogin", "bJ5GQn-9999");
+			params2.put("apiTransKey", "lL3CNUjWdn");
+			params2.put("providerId", "511");
+			params2.put("transactionId", generateTokenString());
+			params2.put("accountNo", Database.users.get(from).prn);
+			params2.put("amount", amount);
+			params2.put("type", "F");
+			params2.put("debitCreditIndicator", "C");
+			params2.put("location", "a455-3483");
+			params2.put("locationType", "1");
+			StringBuilder postData2 = new StringBuilder();
+			for (Map.Entry<String,Object> param : params.entrySet()) {
+				if (postData2.length() != 0) postData2.append('&');
+				postData2.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+				postData2.append('=');
+				postData2.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+			}
+			byte[] postDataBytes2 = postData2.toString().getBytes("UTF-8");
+
+			url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/createAdjustment");
+
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes2.length));
+			conn.setDoOutput(true);
+			conn.getOutputStream().write(postDataBytes2);
+
+			in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+			for (int c; (c = in.read()) >= 0;) {
+				System.out.print((char)c);
+			}
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void loginUser(){
 		
 		//This gets params from post request
@@ -234,7 +387,7 @@ class APIThread implements Runnable {
 		System.setProperty("javax.net.ssl.keyStore", "res/keystore.p12");
 		System.setProperty("javax.net.ssl.keyStorePassword", "letmein");
 		SSLSocketFactory sslFact = (SSLSocketFactory) SSLSocketFactory.getDefault();
-		 String prn ="";
+		String prn ="";
 		
 		try{
 			Map<String, Object> params = new LinkedHashMap<>();
