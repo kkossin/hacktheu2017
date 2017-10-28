@@ -608,14 +608,20 @@ class APIThread implements Runnable {
 				JsonParser kparser = new JsonParser();
                 JsonObject json = kparser.parse(EntityUtils.toString(response.getEntity())).getAsJsonObject();
                 
-                System.out.println(json.toString());
                 try {
-                	  String toPrn = json.getAsJsonObject("images").getAsJsonObject("transaction").get("subject_id").getAsString();
+                	  JsonArray images = kparser.parse(json.get("images").toString()).getAsJsonArray();
+                	  JsonObject obj = images.get(0).getAsJsonObject();
+                	  JsonObject trans = obj.get("transaction").getAsJsonObject();
+                	  String prn = trans.get("subject_id").getAsString();
+                	  String username = getNameFromPrn(prn);
+                	  System.out.println("Match found with: " + username);
+  					  httpResponseCode = 200;
+  					  responseBuffer.append("{\"UserToken\":\"" + username + "\"}");
 				} catch (Exception e) {
-					System.out.println();// TODO: handle exception
-				}
-             
-               //System.out.println(toPrn);
+					httpResponseCode = 200;
+					responseBuffer.append("{\"UserToken\":\"No Match Found\"}");
+					System.out.println("No match found");// TODO: handle exception
+				}             
 			}
 			else
 			{
@@ -632,7 +638,10 @@ class APIThread implements Runnable {
 	{
 		for(user current : Database.users.values())
 		{
-		//	if(current.prn)
+			if(current.prn.equals(inPrn))
+			{
+				return current.userName;
+			}
 		}
 		return null;
 	}
