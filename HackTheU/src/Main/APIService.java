@@ -365,12 +365,12 @@ class APIThread implements Runnable {
 		
 		JsonParser parser = new JsonParser();
 		jsonRequest = parser.parse(requestString).getAsJsonObject();
-		String email = jsonRequest.get("Username").getAsString();
+		//String email = jsonRequest.get("Username").getAsString();
 		
 		
 		
 		recognizeInfo info = new recognizeInfo();		
-		info.image = jsonRequest.get("Images").getAsString();		
+		info.image = jsonRequest.get("Image").getAsString();		
 		info.image=info.image.replace(' ','+');
 		
 		info.gallery_name = "buschemi";
@@ -383,8 +383,11 @@ class APIThread implements Runnable {
 				System.out.println("Success!");
 				httpResponseCode = 200;
 				JsonParser kparser = new JsonParser();
-                //JsonObject json = kparser.parse(EntityUtils.toString(response.getEntity())).getAsJsonObject();
-              //  System.out.println(json);
+                JsonObject json = kparser.parse(EntityUtils.toString(response.getEntity())).getAsJsonObject();
+                
+                System.out.println(json.toString());
+               String toPrn = json.get("subject_id").getAsString();
+               
 			}
 			else
 			{
@@ -396,6 +399,17 @@ class APIThread implements Runnable {
 		}
 	}
 
+	
+	public String getNameFromPrn(String inPrn)//TODO: This is terrible maybe use prn as the key  later time permitting
+	{
+		for(user current : Database.users.values())
+		{
+		//	if(current.prn)
+		}
+		return null;
+	}
+	
+	
 	public void getUserInfo(Map<String, String> params){
 		//TODO: GET PARAMS
 		String userToken = params.get("UserToken");
