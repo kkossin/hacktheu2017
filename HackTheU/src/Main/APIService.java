@@ -184,17 +184,71 @@ class APIThread implements Runnable {
 	}
 	
 	private void getBalance() {
+		String balance = "";
 		JsonParser parser = new JsonParser();
 		jsonRequest = parser.parse(requestString).getAsJsonObject();
 		String username = jsonRequest.get("Username").getAsString();
-		String amount = jsonRequest.get("Amount").getAsString();
+		String prn = Database.users.get(username).prn;
 		
 		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
 		System.setProperty("javax.net.ssl.keyStore", "res/keystore.p12");
 		System.setProperty("javax.net.ssl.keyStorePassword", "letmein");
 		SSLSocketFactory sslFact = (SSLSocketFactory) SSLSocketFactory.getDefault();
-		String prn = "";
-		
+		try {
+			Map<String,Object> params = new LinkedHashMap<>();
+			params.put("apiLogin", "bJ5GQn-9999");
+			params.put("apiTransKey", "lL3CNUjWdn");
+			params.put("providerId", "511");
+			Random rand = new Random();
+			params.put("transactionId", rand.nextInt());
+			params.put("accountNo", prn);
+			StringBuilder postData = new StringBuilder();
+			for (Map.Entry<String,Object> param : params.entrySet()) {
+				if (postData.length() != 0) postData.append('&');
+				postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+				postData.append('=');
+				postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+			}
+			byte[] postDataBytes = postData.toString().getBytes("UTF-8");
+
+			URL url = new URL("https://sandbox-api.gpsrv.com/intserv/4.0/getBalance");
+
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+			conn.setDoOutput(true);
+			conn.getOutputStream().write(postDataBytes);
+
+			String xmlOutput;
+			StringBuilder sb = new StringBuilder();
+			String pattern = "<balance>(\\d+(.\\d)?\\d*)<\\/balance>";
+			 Pattern r = Pattern.compile(pattern);
+			
+			Reader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+			for (int c; (c = in.read()) >= 0;) {
+				sb.append((char)c);		
+				System.out.print((char)c);
+			}
+			
+			xmlOutput=sb.toString();
+			Matcher m = r.matcher(xmlOutput);
+			if(m.find())
+			{
+				balance=m.group(1);
+			}
+			
+			JsonObject jsonResponse = new JsonObject();
+			String token = balance;
+			jsonResponse.addProperty("UserToken", balance);
+			responseBuffer.append(jsonResponse.toString());
+			httpResponseCode = 200;
+
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void addFunds() {
@@ -355,6 +409,7 @@ class APIThread implements Runnable {
 		if (username != null && pword != null) {
 			if(Database.loginUser(username, pword))
 			{
+				getBalance();
 				JsonObject jsonResponse = new JsonObject();
 				String token = username;
 				jsonResponse.addProperty("UserToken", token);
