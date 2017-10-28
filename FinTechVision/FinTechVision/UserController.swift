@@ -18,10 +18,13 @@ class UserController: NSObject {
     var currentPassword: String?
     var currentImages: String?
     var currentAccountBalance: String?
+    var currentHistory: [Transaction] = []
     
     static let sharedInstance = UserController()
     
-    fileprivate override init() {}
+    fileprivate override init() {
+        currentHistory = []
+    }
     
     // MARK: - Networkings
     
@@ -251,6 +254,50 @@ class UserController: NSObject {
             
             do{ // Parse Json Object and Get User Token
                 completionHandler(true, nil)
+            }catch{
+                print("Unable to parse json object durring addFunds")
+            }
+            completionHandler(false, error)
+            return
+        }
+        task.resume()
+    }
+    
+    func getHistory(username: String, completionHandler: @escaping (Bool, Error?) -> Void) {
+        
+        var request = URLRequest(url: URL(string: host + "getHistory")!)
+        request.httpMethod = "POST"
+        let postString = "{\"Username\":\"\(username)\"}"
+        print(postString)
+        request.httpBody = postString.data(using: .utf8)
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil else {
+                //check for fundamental networking error
+                completionHandler(false, error)
+                return
+            }
+            
+            if let httpStatus = response as? HTTPURLResponse, (httpStatus.statusCode != 200) {
+                // check for http errors
+                print("addFunds statusCode should be 200, but is \(httpStatus.statusCode)")
+                completionHandler(false, error)
+                return
+            }
+            
+            do{ // Parse Json Object and Get User Token
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]{
+                    if let token = json["Transactions"] as? [[String: Any]] {
+                        for t in token {
+                            
+                            let trans:Transaction! = Transaction()
+                            trans!.date = (t["Date"] as? String)!
+                            trans!.amount = String(describing: t["Amount"] as! Double)
+                            self.currentHistory.append(trans!)
+                        }
+                        completionHandler(true,nil)
+                        return
+                    }
+                }
             }catch{
                 print("Unable to parse json object durring addFunds")
             }

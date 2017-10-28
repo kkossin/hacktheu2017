@@ -8,8 +8,13 @@
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="HelveticaNeue.ttc">
+            <string>HelveticaNeue</string>
+        </array>
+    </customFonts>
     <objects>
-        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CameraVC" customModule="FinTechVision" customModuleProvider="target">
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CameraVC" customModule="PayWithYoFace" customModuleProvider="target">
             <connections>
                 <outlet property="imageView1" destination="99S-p9-ald" id="IeB-5W-fu9"/>
                 <outlet property="imageView2" destination="MCc-IC-i54" id="gUP-su-M08"/>
@@ -39,45 +44,57 @@
                     </connections>
                 </button>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="99S-p9-ald">
-                    <rect key="frame" x="50" y="70" width="119" height="159"/>
+                    <rect key="frame" x="50" y="145" width="119" height="159"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="119" id="7z8-1b-J5D"/>
                         <constraint firstAttribute="height" constant="159" id="NAt-EO-aoV"/>
                     </constraints>
                 </imageView>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Nyp-de-HUk">
-                    <rect key="frame" x="206" y="269" width="119" height="159"/>
+                    <rect key="frame" x="206" y="344" width="119" height="159"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="159" id="4M6-b6-wXn"/>
                         <constraint firstAttribute="width" constant="119" id="tq5-qe-CsP"/>
                     </constraints>
                 </imageView>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="s0Q-UI-8Z8">
-                    <rect key="frame" x="50" y="269" width="119" height="159"/>
+                    <rect key="frame" x="50" y="344" width="119" height="159"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="159" id="tUh-b9-RT2"/>
                         <constraint firstAttribute="width" constant="119" id="uUL-U7-jgw"/>
                     </constraints>
                 </imageView>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="MCc-IC-i54">
-                    <rect key="frame" x="206" y="70" width="119" height="159"/>
+                    <rect key="frame" x="206" y="145" width="119" height="159"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="159" id="F55-k1-qMA"/>
                         <constraint firstAttribute="width" constant="119" id="xnt-VG-G68"/>
                     </constraints>
                 </imageView>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Help us learn your face! Take 4 pictures of yourself and we will link them to your account!" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="4" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JrQ-od-yOW">
+                    <rect key="frame" x="63" y="50" width="250" height="75"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="75" id="G7F-eC-Tcn"/>
+                        <constraint firstAttribute="width" constant="250" id="qup-6Z-tXo"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="16"/>
+                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
             </subviews>
             <color key="backgroundColor" red="0.29803922770000002" green="0.29803922770000002" blue="0.29803922770000002" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
                 <constraint firstItem="fnl-2z-Ty3" firstAttribute="trailing" secondItem="Nyp-de-HUk" secondAttribute="trailing" constant="50" id="4tz-qM-Jza"/>
                 <constraint firstItem="fnl-2z-Ty3" firstAttribute="trailing" secondItem="MCc-IC-i54" secondAttribute="trailing" constant="50" id="ALZ-vp-Dpb"/>
                 <constraint firstItem="fnl-2z-Ty3" firstAttribute="bottom" secondItem="P7E-C4-Zhh" secondAttribute="bottom" constant="58" id="Clf-PM-uVj"/>
-                <constraint firstItem="MCc-IC-i54" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="50" id="E9e-b8-gRI"/>
+                <constraint firstItem="MCc-IC-i54" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="125" id="E9e-b8-gRI"/>
+                <constraint firstItem="JrQ-od-yOW" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="EN0-M2-1Yd"/>
                 <constraint firstItem="Nyp-de-HUk" firstAttribute="top" secondItem="MCc-IC-i54" secondAttribute="bottom" constant="40" id="Qin-sV-edp"/>
                 <constraint firstItem="s0Q-UI-8Z8" firstAttribute="top" secondItem="99S-p9-ald" secondAttribute="bottom" constant="40" id="RZB-vi-nOy"/>
                 <constraint firstItem="P7E-C4-Zhh" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="Y5N-SJ-TCf"/>
+                <constraint firstItem="JrQ-od-yOW" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="30" id="ekX-Ls-n3F"/>
                 <constraint firstItem="99S-p9-ald" firstAttribute="leading" secondItem="fnl-2z-Ty3" secondAttribute="leading" constant="50" id="k8b-KT-bKT"/>
-                <constraint firstItem="99S-p9-ald" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="50" id="u1v-jn-anH"/>
+                <constraint firstItem="99S-p9-ald" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="125" id="u1v-jn-anH"/>
                 <constraint firstItem="s0Q-UI-8Z8" firstAttribute="leading" secondItem="fnl-2z-Ty3" secondAttribute="leading" constant="50" id="yYv-Vc-UFY"/>
             </constraints>
             <viewLayoutGuide key="safeArea" id="fnl-2z-Ty3"/>

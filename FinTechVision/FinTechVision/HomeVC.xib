@@ -62,7 +62,7 @@
                         <constraint firstAttribute="width" constant="250" id="7mG-uW-Yy9"/>
                         <constraint firstAttribute="height" constant="50" id="xBO-i6-b0H"/>
                     </constraints>
-                    <state key="normal" title="Kiosk Mode">
+                    <state key="normal" title="History">
                         <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     </state>
                     <connections>

@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		92062B281FA50B910076E289 /* HistoryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92062B261FA50B910076E289 /* HistoryTableViewCell.swift */; };
+		92062B291FA50B910076E289 /* HistoryTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 92062B271FA50B910076E289 /* HistoryTableViewCell.xib */; };
+		9246A6FF1FA4FBCF00951EF5 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9246A6FE1FA4FBCF00951EF5 /* Transaction.swift */; };
 		92FA47D61FA410630020EA12 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FA47D51FA410630020EA12 /* AppDelegate.swift */; };
 		92FA47DB1FA410640020EA12 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 92FA47D91FA410640020EA12 /* Main.storyboard */; };
 		92FA47DD1FA410640020EA12 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 92FA47DC1FA410640020EA12 /* Assets.xcassets */; };
@@ -30,6 +33,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		92062B261FA50B910076E289 /* HistoryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryTableViewCell.swift; sourceTree = "<group>"; };
+		92062B271FA50B910076E289 /* HistoryTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = HistoryTableViewCell.xib; sourceTree = "<group>"; };
+		9246A6FE1FA4FBCF00951EF5 /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
 		92FA47D21FA410630020EA12 /* PayWithYoFace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PayWithYoFace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		92FA47D51FA410630020EA12 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		92FA47DA1FA410640020EA12 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -105,6 +111,9 @@
 				92FA47DE1FA410640020EA12 /* LaunchScreen.storyboard */,
 				92FA47E11FA410640020EA12 /* Info.plist */,
 				92FA48111FA476B90020EA12 /* UserController.swift */,
+				9246A6FE1FA4FBCF00951EF5 /* Transaction.swift */,
+				92062B261FA50B910076E289 /* HistoryTableViewCell.swift */,
+				92062B271FA50B910076E289 /* HistoryTableViewCell.xib */,
 			);
 			path = FinTechVision;
 			sourceTree = "<group>";
@@ -178,6 +187,7 @@
 				92FA47DB1FA410640020EA12 /* Main.storyboard in Resources */,
 				92FA48141FA4B0220020EA12 /* Money_Face_Emoji.png in Resources */,
 				92FA48101FA464BD0020EA12 /* KioskModelVC.xib in Resources */,
+				92062B291FA50B910076E289 /* HistoryTableViewCell.xib in Resources */,
 				92FA48001FA44F030020EA12 /* CameraVC.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -193,9 +203,11 @@
 				92FA47FF1FA44F030020EA12 /* CameraVC.swift in Sources */,
 				92FA48121FA476B90020EA12 /* UserController.swift in Sources */,
 				92FA480F1FA464BD0020EA12 /* KioskModelVC.swift in Sources */,
+				9246A6FF1FA4FBCF00951EF5 /* Transaction.swift in Sources */,
 				92FA47EF1FA4254D0020EA12 /* HomeVC.swift in Sources */,
 				92FA47D61FA410630020EA12 /* AppDelegate.swift in Sources */,
 				92FA47F31FA425E20020EA12 /* SplashVC.swift in Sources */,
+				92062B281FA50B910076E289 /* HistoryTableViewCell.swift in Sources */,
 				92FA47FB1FA4311B0020EA12 /* LoginVC.swift in Sources */,
 				92FA480B1FA464A80020EA12 /* SendMoneyVC.swift in Sources */,
 			);

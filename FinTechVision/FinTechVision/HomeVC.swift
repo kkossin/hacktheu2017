@@ -127,8 +127,17 @@ class HomeVC: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func kioskModeButtonPressed(_ sender: Any) {
-        let kioskModelVC = KioskModelVC()
-        self.navigationController?.pushViewController(kioskModelVC, animated: true)
+        userController.getHistory(username: userController.currentUser!) { (success, error) -> () in
+            if(success){
+                OperationQueue.main.addOperation {
+                    let kioskModelVC = KioskModelVC()
+                    self.navigationController?.pushViewController(kioskModelVC, animated: true)
+                }
+            } else {
+                print("Error durring login" + error.debugDescription)
+                return
+            }
+        }
     }
     
     /*
