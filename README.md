@@ -1,8 +1,8 @@
 # hacktheu2017
-Hack the U 2017 Project
+Hack the U 2017 Project <br />
 MLH Season 2018
 
-1st place Machine Learning / AI Challenge
+1st place Machine Learning / AI Challenge <br />
 1st place FinX API Challenge
 
 
